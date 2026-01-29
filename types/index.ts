@@ -6,6 +6,7 @@ export interface Project {
     folder_path: string;
     description?: string;
     due_date?: string;
+    created_at?: string;
 }
 
 export interface Asset {

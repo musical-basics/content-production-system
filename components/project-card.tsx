@@ -4,7 +4,7 @@ import Image from "next/image"
 import { Calendar } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import type { Project } from "@/types"
-import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 interface ProjectCardProps {
   project: Project
@@ -14,16 +14,6 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, onClick }: ProjectCardProps) {
-  const router = useRouter()
-
-  const handleCardClick = () => {
-    if (onClick) {
-      onClick()
-    } else {
-      router.push(`/projects/${project.id}`)
-    }
-  }
-
   const formatDate = (dateString?: string) => {
     if (!dateString) return "No Date"
     const date = new Date(dateString)
@@ -34,11 +24,8 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
   const isOverdue = dueDateObj ? dueDateObj < new Date() : false
   const isUrgent = dueDateObj ? !isOverdue && dueDateObj <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) : false
 
-  return (
-    <button
-      onClick={handleCardClick}
-      className="w-full bg-card rounded-lg overflow-hidden border border-border hover:border-muted-foreground/30 transition-all duration-200 hover:shadow-lg hover:shadow-black/20 text-left group"
-    >
+  const CardContent = (
+    <>
       <div className="relative aspect-video overflow-hidden">
         <Image
           src="/placeholder.svg"
@@ -68,6 +55,26 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
           </Badge>
         </div>
       </div>
-    </button>
+    </>
+  )
+
+  if (onClick) {
+    return (
+      <div
+        onClick={onClick}
+        className="w-full bg-card rounded-lg overflow-hidden border border-border hover:border-muted-foreground/30 transition-all duration-200 hover:shadow-lg hover:shadow-black/20 text-left group cursor-pointer"
+      >
+        {CardContent}
+      </div>
+    )
+  }
+
+  return (
+    <Link
+      href={`/projects/${project.id}`}
+      className="block w-full bg-card rounded-lg overflow-hidden border border-border hover:border-muted-foreground/30 transition-all duration-200 hover:shadow-lg hover:shadow-black/20 text-left group"
+    >
+      {CardContent}
+    </Link>
   )
 }

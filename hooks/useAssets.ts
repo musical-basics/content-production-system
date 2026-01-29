@@ -4,22 +4,25 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import type { Asset } from "@/types"
 
-export function useAssets(projectId: string) {
+export function useAssets(projectId?: string) {
     const [assets, setAssets] = useState<Asset[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        if (!projectId) return
-
         async function fetchAssets() {
             try {
                 setLoading(true)
-                const { data, error } = await supabase
+                let query = supabase
                     .from("assets")
                     .select("*")
-                    .eq("project_id", projectId)
                     .order("created_at", { ascending: false })
+
+                if (projectId) {
+                    query = query.eq("project_id", projectId)
+                }
+
+                const { data, error } = await query
 
                 if (error) {
                     throw error
@@ -39,11 +42,14 @@ export function useAssets(projectId: string) {
         fetchAssets()
 
         // Realtime subscription
+        const channelName = projectId ? `assets_channel_${projectId}` : 'assets_channel_all'
+        const filter = projectId ? `project_id=eq.${projectId}` : undefined
+
         const channel = supabase
-            .channel(`assets_channel_${projectId}`)
+            .channel(channelName)
             .on(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'assets', filter: `project_id=eq.${projectId}` },
+                { event: '*', schema: 'public', table: 'assets', filter },
                 (payload) => {
                     if (payload.eventType === 'INSERT') {
                         setAssets((prev) => [payload.new as Asset, ...prev])

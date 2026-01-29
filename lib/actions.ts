@@ -1,12 +1,12 @@
 "use server"
 
-import { supabase } from "@/lib/supabase"
+import { supabaseAdmin } from "@/lib/supabase-admin"
 import type { Project } from "@/types"
 import { revalidatePath } from "next/cache"
 
 export async function updateProjectStatus(id: string, newStatus: Project["status"]) {
     try {
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
             .from("projects")
             .update({ status: newStatus })
             .eq("id", id)
@@ -23,7 +23,7 @@ export async function updateProjectStatus(id: string, newStatus: Project["status
 
 export async function createProject(title: string) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from("projects")
             .insert({
                 title,

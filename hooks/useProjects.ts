@@ -15,7 +15,7 @@ export function useProjects() {
                 const { data, error } = await supabase
                     .from("projects")
                     .select("*")
-                    .order("due_date", { ascending: true })
+                    .order("created_at", { ascending: false })
 
                 if (error) {
                     throw error
@@ -41,9 +41,7 @@ export function useProjects() {
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'projects' },
                 (payload) => {
-                    // Simple strategy: refetch all for consistency or merge updates.
-                    // For simplicity and correctness with ordering, simple refetch or basic merge.
-                    // Let's do basic state updates:
+                    console.log('Realtime Event:', payload)
                     if (payload.eventType === 'INSERT') {
                         setProjects((prev) => [...prev, payload.new as Project])
                     } else if (payload.eventType === 'UPDATE') {
@@ -53,7 +51,9 @@ export function useProjects() {
                     }
                 }
             )
-            .subscribe()
+            .subscribe((status) => {
+                console.log("Realtime Subscription Status:", status)
+            })
 
         return () => {
             supabase.removeChannel(channel)
