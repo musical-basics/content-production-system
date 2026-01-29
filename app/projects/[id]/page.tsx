@@ -103,7 +103,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                 </div>
             ) : (
-                <AssetGrid assets={assets} />
+                <AssetGrid assets={assets} projectId={id} />
             )}
         </div>
     )

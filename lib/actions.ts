@@ -43,3 +43,53 @@ export async function createProject(title: string) {
         return { success: false, error }
     }
 }
+
+export async function uploadAsset(projectId: string, formData: FormData) {
+    try {
+        const file = formData.get("file") as File
+        if (!file) {
+            return { success: false, error: "No file provided" }
+        }
+
+        const filename = file.name
+        const fileType = filename.split(".").pop()?.toLowerCase() || "unknown"
+        const sizeBytes = file.size
+        const storagePath = `${projectId}/${Date.now()}-${filename}`
+
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+            .from("project-assets")
+            .upload(storagePath, file)
+
+        if (uploadError) throw uploadError
+
+        // Get public URL
+        const { data: urlData } = supabaseAdmin.storage
+            .from("project-assets")
+            .getPublicUrl(storagePath)
+
+        const publicUrl = urlData.publicUrl
+
+        // Insert asset record
+        const { data: assetData, error: assetError } = await supabaseAdmin
+            .from("assets")
+            .insert({
+                project_id: projectId,
+                filename,
+                file_type: fileType,
+                wasabi_url: publicUrl,
+                size_bytes: sizeBytes,
+            })
+            .select()
+            .single()
+
+        if (assetError) throw assetError
+
+        revalidatePath(`/projects/${projectId}`)
+        revalidatePath("/assets")
+        return { success: true, asset: assetData }
+    } catch (error) {
+        console.error("Error uploading asset:", error)
+        return { success: false, error }
+    }
+}

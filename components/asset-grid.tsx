@@ -3,12 +3,14 @@
 import { FileIcon, ImageIcon, VideoIcon } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import type { Asset } from "@/types"
+import { AssetUploader } from "./asset-uploader"
 
 interface AssetGridProps {
     assets: Asset[]
+    projectId?: string  // If provided, show uploader
 }
 
-export function AssetGrid({ assets }: AssetGridProps) {
+export function AssetGrid({ assets, projectId }: AssetGridProps) {
     const getFileIcon = (type: string) => {
         switch (type.toLowerCase()) {
             case "mp4":
@@ -24,6 +26,8 @@ export function AssetGrid({ assets }: AssetGridProps) {
         }
     }
 
+    const isImage = (type: string) => ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(type.toLowerCase())
+
     return (
         <div className="flex-1 bg-muted/10 h-full overflow-hidden flex flex-col">
             <div className="p-6 border-b border-border">
@@ -32,21 +36,38 @@ export function AssetGrid({ assets }: AssetGridProps) {
             </div>
 
             <ScrollArea className="flex-1 p-6">
+                {projectId && (
+                    <div className="mb-6">
+                        <AssetUploader projectId={projectId} />
+                    </div>
+                )}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     {assets.map((asset) => (
                         <div
                             key={asset.id}
-                            className="group aspect-square bg-card rounded-lg border border-border hover:border-sidebar-accent hover:shadow-md transition-all flex flex-col items-center justify-center relative overflow-hidden p-4 text-center cursor-pointer"
+                            className="group bg-card rounded-lg border border-border hover:border-sidebar-accent hover:shadow-md transition-all flex flex-col relative overflow-hidden p-2 cursor-pointer"
                         >
-                            <div className="mb-3 p-3 rounded-full bg-muted group-hover:bg-sidebar-accent/50 transition-colors">
-                                {getFileIcon(asset.file_type)}
+                            <div className="relative aspect-square mb-2 bg-muted rounded-md flex items-center justify-center overflow-hidden">
+                                {isImage(asset.file_type) ? (
+                                    <img
+                                        src={asset.wasabi_url}
+                                        alt={asset.filename}
+                                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                                    />
+                                ) : (
+                                    <div className="p-3 rounded-full group-hover:bg-sidebar-accent/50 transition-colors">
+                                        {getFileIcon(asset.file_type)}
+                                    </div>
+                                )}
                             </div>
-                            <p className="text-sm font-medium text-foreground truncate w-full px-2">
-                                {asset.filename}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                {(asset.size_bytes ? (asset.size_bytes / 1024 / 1024).toFixed(2) : "0")} MB
-                            </p>
+                            <div className="px-2 pb-1">
+                                <p className="text-sm font-medium text-foreground truncate w-full">
+                                    {asset.filename}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    {(asset.size_bytes ? (asset.size_bytes / 1024 / 1024).toFixed(2) : "0")} MB
+                                </p>
+                            </div>
                         </div>
                     ))}
 
