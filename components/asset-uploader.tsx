@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Upload, Loader2, X } from "lucide-react"
 import { uploadAsset } from "@/lib/actions"
 import { toast } from "sonner"
+import imageCompression from "browser-image-compression"
 
 interface AssetUploaderProps {
     projectId: string
@@ -22,8 +23,31 @@ export function AssetUploader({ projectId }: AssetUploaderProps) {
 
         try {
             for (const file of Array.from(files)) {
+                let fileToUpload: File = file
+
+                // 1. Compress Image if it's an image
+                if (file.type.startsWith("image/")) {
+                    const options = {
+                        maxSizeMB: 1.5,
+                        maxWidthOrHeight: 1920,
+                        useWebWorker: true,
+                    }
+                    try {
+                        const compressedBlob = await imageCompression(file, options)
+                        fileToUpload = new File([compressedBlob], file.name, {
+                            type: file.type,
+                            lastModified: Date.now(),
+                        })
+                        console.log(`Compressed ${file.name}: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`)
+                    } catch (error) {
+                        console.error("Compression error:", error)
+                        // Fallback to original file
+                    }
+                }
+
+                // 2. Upload
                 const formData = new FormData()
-                formData.append("file", file)
+                formData.append("file", fileToUpload)
 
                 const result = await uploadAsset(projectId, formData)
 
@@ -69,8 +93,8 @@ export function AssetUploader({ projectId }: AssetUploaderProps) {
     return (
         <div
             className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-muted-foreground/50"
+                ? "border-primary bg-primary/5"
+                : "border-border hover:border-muted-foreground/50"
                 }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
