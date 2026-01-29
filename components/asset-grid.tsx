@@ -4,10 +4,11 @@ import { FileIcon, ImageIcon, VideoIcon } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import type { Asset } from "@/types"
 import { AssetUploader } from "./asset-uploader"
+import { AssetPicker } from "./asset-picker"
 
 interface AssetGridProps {
     assets: Asset[]
-    projectId?: string  // If provided, show uploader
+    projectId?: string  // If provided, show uploader and picker
 }
 
 export function AssetGrid({ assets, projectId }: AssetGridProps) {
@@ -30,9 +31,14 @@ export function AssetGrid({ assets, projectId }: AssetGridProps) {
 
     return (
         <div className="flex-1 bg-muted/10 h-full overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-border">
-                <h2 className="text-xl font-semibold text-foreground">Assets</h2>
-                <p className="text-sm text-muted-foreground">{assets.length} files</p>
+            <div className="p-6 border-b border-border flex items-center justify-between">
+                <div>
+                    <h2 className="text-xl font-semibold text-foreground">Assets</h2>
+                    <p className="text-sm text-muted-foreground">{assets.length} files</p>
+                </div>
+                {projectId && (
+                    <AssetPicker projectId={projectId} />
+                )}
             </div>
 
             <ScrollArea className="flex-1 p-6">

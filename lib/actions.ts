@@ -93,3 +93,37 @@ export async function uploadAsset(projectId: string, formData: FormData) {
         return { success: false, error }
     }
 }
+
+export async function linkAssetToProject(assetId: string, projectId: string) {
+    try {
+        // 1. Get the original asset
+        const { data: original, error: fetchError } = await supabaseAdmin
+            .from("assets")
+            .select("*")
+            .eq("id", assetId)
+            .single()
+
+        if (fetchError) throw fetchError
+
+        // 2. Insert as a new entry for the target project (pointing to same storage)
+        const { data: linked, error: linkError } = await supabaseAdmin
+            .from("assets")
+            .insert({
+                project_id: projectId,
+                filename: original.filename,
+                file_type: original.file_type,
+                wasabi_url: original.wasabi_url,
+                size_bytes: original.size_bytes,
+            })
+            .select()
+            .single()
+
+        if (linkError) throw linkError
+
+        revalidatePath(`/projects/${projectId}`)
+        return { success: true, asset: linked }
+    } catch (error) {
+        console.error("Error linking asset:", error)
+        return { success: false, error }
+    }
+}
